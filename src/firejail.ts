@@ -22,6 +22,11 @@ export function buildFirejailArgs(config: ResolvedConfig, command: string[]): st
     args.push(`--bind-try=${host},${guest}`);
   }
 
+  // Add writable bind mounts for temporary directories
+  for (const { host, guest } of config.fs.rwBind) {
+    args.push(`--bind-try=${host},${guest}`);
+  }
+
   // ── Working dir ───────────────────────────────────────────────────────────
   args.push(`--chdir=${config.cwd}`);
 

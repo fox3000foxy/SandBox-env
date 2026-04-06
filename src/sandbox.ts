@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -52,29 +52,39 @@ export class Sandbox {
     const config = await this.getConfig();
     const interpreter = resolveInterpreter(runOpts.lang);
 
-    // Write script to a temp file on the host (visible inside sandbox via bind)
+    // Create a unique temporary directory for this execution
+    const tempDir = mkdtempSync(join(tmpdir(), 'sandbox-'));
+    try {
+      // Add the temporary directory as a writable bind mount
+      config.fs.rwBind.push({ host: tempDir, guest: '/sandbox' });
+
+      // Build the command to execute
+      const innerCmd = [interpreter, '/sandbox/script'];
+
+      // Execute the sandboxed command
+      const result = await this.executeSandbox(config, innerCmd, runOpts);
+
+      return result;
+    } finally {
+      // Clean up the temporary directory after execution
+      rmdirSync(tempDir);
+    }
+  }
+
+  async executeSandbox(config: ResolvedConfig, innerCmd: string[], runOpts: RunOptions): Promise<ExecResult> {
     const dir = mkdtempSync(join(tmpdir(), 'torbox-'));
     const ext = langToExt(runOpts.lang);
     const scriptPath = join(dir, `script${ext}`);
 
     writeFileSync(scriptPath, runOpts.code, { encoding: 'utf8', mode: 0o700 });
 
-    // Guest path mirrors host path (tmpfs overlays /tmp inside bwrap but
-    // we use a dir-level bind so the file is accessible)
     const guestScriptPath = scriptPath; // same path, ro-bound below
-
-    // Merge env: sandbox-level < run-level < tor proxy vars
     const mergedEnv = buildEnv(config, runOpts);
 
-    // Build the interpreter + script command
-    const innerCmd = [interpreter, guestScriptPath];
-
-    // Wrap with sandbox backend
     let outerBin: string;
     let outerArgs: string[];
 
     if (config.backend === 'bwrap') {
-      // Bind the temp dir ro so the script is accessible
       const augmented: ResolvedConfig = {
         ...config,
         fs: {
@@ -112,18 +122,11 @@ export class Sandbox {
     }
   }
 
-  /**
-   * Probes whether the sandbox backend is available on this system.
-   * Returns the backend name and binary path, or throws.
-   */
   async probe(): Promise<{ backend: string; binPath: string }> {
     const cfg = await this.getConfig();
     return { backend: cfg.backend, binPath: cfg.binPath };
   }
 
-  /**
-   * Convenience: checks Tor connectivity independently of run().
-   */
   async checkTor(): Promise<void> {
     const cfg = await this.getConfig();
     await checkTorProxy(cfg.tor);
