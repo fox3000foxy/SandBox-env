@@ -4,10 +4,6 @@
   "description": "Isolated sandbox executor with Tor SOCKS5 routing — no external deps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "test": "node --experimental-strip-types test/sandbox.test.ts"
-  },
   "keywords": [
     "sandbox",
     "tor",
@@ -20,6 +16,20 @@
     "@types/node": "^25.5.2",
     "typescript": "^5.9.3",
     "@types/bun": "latest"
+  },
+  "scripts": {
+    "tsc:build": "npx tsc -b",
+    "typecheck": "npx tsc -p tsconfig.json --noEmit",
+    "test": "npx jest --runInBand",
+    "test:watch": "npx jest --watch",
+    "dev": "bun --watch src/index.ts",
+    "check": "bun run tsc:build && bun run test",
+    "format": "npx prettier --config prettier.json --write src",
+    "format:check": "npx prettier --config prettier.json --check src",
+    "lint": "npx eslint src",
+    "build": "npx esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --minify --tree-shaking",
+    "start": "node dist/index.js",
+    "test-battery": "bun run typecheck && bun run test && bun run lint"
   },
   "type": "module",
   "private": true
