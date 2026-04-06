@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { createConnection } from "node:net";
 import type {
-    ResolvedConfig,
-    SandboxBackend,
-    SandboxOptions,
-    TorOptions,
+  ResolvedConfig,
+  SandboxBackend,
+  SandboxOptions,
+  TorOptions,
 } from "./types.js";
 
 // ─── Binary detection ────────────────────────────────────────────────────────
