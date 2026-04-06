@@ -1,5 +1,5 @@
 {
-  "name": "torbox",
+  "name": "torsandbox",
   "version": "0.1.0",
   "description": "Isolated sandbox executor with Tor SOCKS5 routing — no external deps",
   "main": "dist/index.js",
