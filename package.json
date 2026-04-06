@@ -1,7 +1,7 @@
 {
   "name": "torbox",
   "version": "0.1.0",
-  "description": "Isolated sandbox executor with Tor SOCKS5 routing \u2014 no external deps",
+  "description": "Isolated sandbox executor with Tor SOCKS5 routing — no external deps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -18,7 +18,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^25.5.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/bun": "latest"
   },
-  "type": "module"
+  "type": "module",
+  "private": true
 }
