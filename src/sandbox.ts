@@ -1,17 +1,12 @@
-import { spawn } from "node:child_process";
-import { mkdtempSync, unlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { spawn } from 'node:child_process';
+import { mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-import { buildBwrapArgs } from "./bwrap.js";
-import { checkTorProxy, resolveConfig, resolveInterpreter } from "./detect.js";
-import { buildFirejailArgs } from "./firejail.js";
-import type {
-  ExecResult,
-  ResolvedConfig,
-  RunOptions,
-  SandboxOptions,
-} from "./types.js";
+import { buildBwrapArgs } from './bwrap.js';
+import { checkTorProxy, resolveConfig, resolveInterpreter } from './detect.js';
+import { buildFirejailArgs } from './firejail.js';
+import type { ExecResult, ResolvedConfig, RunOptions, SandboxOptions } from './types.js';
 
 // ─── Sandbox class ────────────────────────────────────────────────────────────
 
@@ -58,11 +53,11 @@ export class Sandbox {
     const interpreter = resolveInterpreter(runOpts.lang);
 
     // Write script to a temp file on the host (visible inside sandbox via bind)
-    const dir = mkdtempSync(join(tmpdir(), "torbox-"));
+    const dir = mkdtempSync(join(tmpdir(), 'torbox-'));
     const ext = langToExt(runOpts.lang);
     const scriptPath = join(dir, `script${ext}`);
 
-    writeFileSync(scriptPath, runOpts.code, { encoding: "utf8", mode: 0o700 });
+    writeFileSync(scriptPath, runOpts.code, { encoding: 'utf8', mode: 0o700 });
 
     // Guest path mirrors host path (tmpfs overlays /tmp inside bwrap but
     // we use a dir-level bind so the file is accessible)
@@ -78,7 +73,7 @@ export class Sandbox {
     let outerBin: string;
     let outerArgs: string[];
 
-    if (config.backend === "bwrap") {
+    if (config.backend === 'bwrap') {
       // Bind the temp dir ro so the script is accessible
       const augmented: ResolvedConfig = {
         ...config,
@@ -137,15 +132,12 @@ export class Sandbox {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildEnv(
-  config: ResolvedConfig,
-  runOpts: RunOptions
-): Record<string, string> {
+function buildEnv(config: ResolvedConfig, runOpts: RunOptions): Record<string, string> {
   const base: Record<string, string> = {
-    PATH: "/usr/local/bin:/usr/bin:/bin",
-    HOME: "/home",
-    TMPDIR: "/tmp",
-    LANG: "C.UTF-8",
+    PATH: '/usr/local/bin:/usr/bin:/bin',
+    HOME: '/home',
+    TMPDIR: '/tmp',
+    LANG: 'C.UTF-8',
     ...config.env,
     ...runOpts.env,
   };
@@ -153,10 +145,10 @@ function buildEnv(
   // Inject Tor proxy vars if Tor is configured
   if (config.tor) {
     const proxyUrl = `socks5h://${config.tor.host}:${config.tor.port}`;
-    base["ALL_PROXY"] = proxyUrl;
-    base["HTTPS_PROXY"] = proxyUrl;
-    base["HTTP_PROXY"] = proxyUrl;
-    base["no_proxy"] = ""; // clear any existing no_proxy
+    base['ALL_PROXY'] = proxyUrl;
+    base['HTTPS_PROXY'] = proxyUrl;
+    base['HTTP_PROXY'] = proxyUrl;
+    base['no_proxy'] = ''; // clear any existing no_proxy
   }
 
   return base;
@@ -184,35 +176,35 @@ function spawnAndCollect(opts: SpawnOptions): Promise<SpawnResult> {
 
     const child = spawn(opts.bin, opts.args, {
       env: opts.env,
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
 
-    child.stdout.on("data", (d: Buffer) => chunks.out.push(d));
-    child.stderr.on("data", (d: Buffer) => chunks.err.push(d));
+    child.stdout.on('data', (d: Buffer) => chunks.out.push(d));
+    child.stderr.on('data', (d: Buffer) => chunks.err.push(d));
 
     if (opts.stdin !== undefined) {
-      child.stdin.write(opts.stdin, "utf8");
+      child.stdin.write(opts.stdin, 'utf8');
       child.stdin.end();
     } else {
       child.stdin.end();
     }
 
     const timer = setTimeout(() => {
-      child.kill("SIGKILL");
+      child.kill('SIGKILL');
       reject(new Error(`Sandbox timed out after ${opts.timeout}ms`));
     }, opts.timeout);
 
-    child.on("error", (err) => {
+    child.on('error', err => {
       clearTimeout(timer);
       reject(new Error(`Failed to spawn sandbox (${opts.bin}): ${err.message}`));
     });
 
-    child.on("close", (code) => {
+    child.on('close', code => {
       clearTimeout(timer);
       resolve({
         exitCode: code ?? -1,
-        stdout: Buffer.concat(chunks.out).toString("utf8"),
-        stderr: Buffer.concat(chunks.err).toString("utf8"),
+        stdout: Buffer.concat(chunks.out).toString('utf8'),
+        stderr: Buffer.concat(chunks.err).toString('utf8'),
         durationMs: Date.now() - start,
       });
     });
@@ -220,18 +212,28 @@ function spawnAndCollect(opts: SpawnOptions): Promise<SpawnResult> {
 }
 
 function langToExt(lang: string): string {
-  return { node: ".mjs", python3: ".py", bash: ".sh", sh: ".sh" }[lang] ?? "";
+  return { node: '.mjs', python3: '.py', bash: '.sh', sh: '.sh' }[lang] ?? '';
 }
 
 function tryUnlink(path: string): void {
-  try { unlinkSync(path); } catch { /* best-effort */ }
+  try {
+    unlinkSync(path);
+  } catch {
+    /* best-effort */
+  }
 }
 
 function tryRmdir(path: string): void {
   try {
     // Use sync rmdir — no recursive needed since we only created one file
-    import("node:fs").then(({ rmdirSync }) => {
-      try { rmdirSync(path); } catch { /* best-effort */ }
+    import('node:fs').then(({ rmdirSync }) => {
+      try {
+        rmdirSync(path);
+      } catch {
+        /* best-effort */
+      }
     });
-  } catch { /* best-effort */ }
+  } catch {
+    /* best-effort */
+  }
 }

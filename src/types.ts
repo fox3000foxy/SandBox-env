@@ -1,6 +1,6 @@
 // ─── Sandbox options ─────────────────────────────────────────────────────────
 
-export type SandboxBackend = "bwrap" | "firejail" | "auto";
+export type SandboxBackend = 'bwrap' | 'firejail' | 'auto';
 
 export interface TorOptions {
   /** Host of the running Tor SOCKS5 proxy (default: 127.0.0.1) */
@@ -45,7 +45,7 @@ export interface SandboxOptions {
 
 // ─── Execution ───────────────────────────────────────────────────────────────
 
-export type ScriptLanguage = "node" | "python3" | "bash" | "sh";
+export type ScriptLanguage = 'node' | 'python3' | 'bash' | 'sh';
 
 export interface RunOptions {
   /** Language / interpreter for the script */
@@ -78,7 +78,7 @@ export interface ExecResult {
 // ─── Internal ────────────────────────────────────────────────────────────────
 
 export interface ResolvedConfig {
-  backend: "bwrap" | "firejail";
+  backend: 'bwrap' | 'firejail';
   binPath: string;
   tor: Required<TorOptions>;
   fs: Required<FilesystemOptions>;

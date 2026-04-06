@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from "./types.js";
+import type { ResolvedConfig } from './types.js';
 
 /**
  * Builds the bwrap(1) argument list for the given config.
@@ -11,51 +11,49 @@ import type { ResolvedConfig } from "./types.js";
  *   - No network namespace by default (keeps access to 127.0.0.1 for Tor)
  *   - Custom ro/rw bind mounts from config
  */
-export function buildBwrapArgs(
-  config: ResolvedConfig,
-  command: string[]
-): string[] {
+export function buildBwrapArgs(config: ResolvedConfig, command: string[]): string[] {
   const args: string[] = [];
 
   // ── Standard ro system paths ─────────────────────────────────────────────
-  const roPaths = ["/usr", "/lib", "/lib64", "/bin", "/sbin", "/etc/resolv.conf"];
+  const roPaths = ['/usr', '/lib', '/lib64', '/bin', '/sbin', '/etc/resolv.conf'];
   for (const p of roPaths) {
-    args.push("--ro-bind-try", p, p);
+    args.push('--ro-bind-try', p, p);
   }
 
   // ── proc / dev ────────────────────────────────────────────────────────────
-  args.push("--proc", "/proc");
-  args.push("--dev", "/dev");
+  args.push('--proc', '/proc');
+  args.push('--dev', '/dev');
 
   // ── tmpfs mounts ──────────────────────────────────────────────────────────
   if (config.fs.tmpfs) {
-    args.push("--tmpfs", "/tmp");
-    args.push("--tmpfs", "/home");
+    args.push('--tmpfs', '/tmp');
+    args.push('--tmpfs', '/home');
   }
 
   // ── User-defined bind mounts ──────────────────────────────────────────────
   for (const { host, guest } of config.fs.roBind) {
-    args.push("--ro-bind", host, guest);
+    args.push('--ro-bind', host, guest);
   }
   for (const { host, guest } of config.fs.rwBind) {
-    args.push("--bind", host, guest);
+    args.push('--bind', host, guest);
   }
 
   // ── Isolation flags ───────────────────────────────────────────────────────
   args.push(
-    "--unshare-user",   // new user namespace
-    "--unshare-pid",    // new pid namespace
-    "--unshare-uts",    // new hostname namespace
-    "--unshare-ipc",    // new IPC namespace
+    '--unshare-user', // new user namespace
+    '--unshare-pid', // new pid namespace
+    '--unshare-uts', // new hostname namespace
+    '--unshare-ipc', // new IPC namespace
     // NOT --unshare-net: we need localhost:9050 (Tor SOCKS5)
-    "--die-with-parent",
-    "--new-session",
-    "--hostname", "sandbox"
+    '--die-with-parent',
+    '--new-session',
+    '--hostname',
+    'sandbox'
   );
 
   // ── Working dir ───────────────────────────────────────────────────────────
-  args.push("--chdir", config.cwd);
+  args.push('--chdir', config.cwd);
 
-  args.push("--", ...command);
+  args.push('--', ...command);
   return args;
 }
