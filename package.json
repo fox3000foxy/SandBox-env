@@ -31,6 +31,5 @@
     "start": "node dist/index.js",
     "test-battery": "bun run typecheck && bun run test && bun run lint"
   },
-  "type": "module",
-  "private": true
+  "type": "module"
 }
